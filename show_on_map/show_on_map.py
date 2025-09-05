@@ -9,9 +9,9 @@ from matplotlib.colors import ListedColormap
 from shapely.geometry import box
 
 # ---------- تنظیم مسیر فایل‌ها ----------
-JSON_PATH = "Mobility_Network.gml_2_map.json"
+JSON_PATH = "../algorithms/leiden/community_detection_outputs/mobility/Mobility_Network.gml_2_map.json"
 
-GML_PATH  = "Mobility_Network.gml/Mobility_Network.gml"
+GML_PATH  = "../dataset/Mobility_Network.gml/Mobility_Network.gml"
 
 
 
