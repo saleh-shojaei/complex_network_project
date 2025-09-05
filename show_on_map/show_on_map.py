@@ -1,16 +1,17 @@
 import json
-import networkx as nx
+from pathlib import Path
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import pandas as pd
+import networkx as nx
 import numpy as np
-from pathlib import Path
+import pandas as pd
 from matplotlib.colors import ListedColormap
 from shapely.geometry import box
 
 # ---------- تنظیم مسیر فایل‌ها ----------
 algorithm_directory = "../algorithms/bigCLAM/community_detection_outputs/communication"
-JSON_PATH = algorithm_directory + "/comm_bigclam_like_single_40.json"
+JSON_PATH = algorithm_directory + "/comm_bigclam_like_overlap_30.json"
 
 # choose dataset!
 # communication
@@ -48,6 +49,8 @@ def _read_opt(path: str):
 # ---------- 1) نگاشت اجتماع ----------
 with open(JSON_PATH, encoding="utf-8") as f:
     raw = json.load(f)
+
+# JSON می‌تواند لیستی از دیکشنری‌ها یا یک دیکشنری تخت باشد
 membership = ({list(d.keys())[0]: list(d.values())[0] for d in raw}
               if isinstance(raw, list) else raw)
 
@@ -55,11 +58,21 @@ membership = ({list(d.keys())[0]: list(d.values())[0] for d in raw}
 G = nx.read_gml(GML_PATH)
 records = []
 for n_id, data in G.nodes(data=True):
+    val = membership.get(str(n_id), data.get("class", 0))  # ممکن است عدد یا لیست باشد
+    # NEW: تشخیص چندعضویتی
+    if isinstance(val, list):
+        vals = [int(v) for v in val]
+        overlap = len(vals) > 1
+        community = vals[0] if len(vals) >= 1 else int(data.get("class", 0))
+    else:
+        overlap = False
+        community = int(val)
     records.append({
         "id": n_id,
         "lat": float(data["lat"]),
         "lon": float(data["lon"]),
-        "community": int(membership.get(str(n_id), data.get("class", 0))),
+        "community": community,  # برای نودهای overlap صرفاً نمادین است
+        "overlap": overlap       # NEW
     })
 df = pd.DataFrame(records)
 
@@ -69,10 +82,16 @@ if not Path(SHP_PATH).exists():
 states = gpd.read_file(SHP_PATH).to_crs("EPSG:4326")
 
 # ---------- 4) پالت رنگ مناسب تعداد زیاد ----------
-n_colors = df["community"].nunique()
-cmap = (plt.cm.get_cmap("tab20", n_colors)
-        if n_colors <= 20 else
-        ListedColormap(plt.cm.gist_ncar(np.linspace(0, 1, n_colors))))
+# NEW: فقط بر اساس نودهای غیر-overlap
+unique_comms = df.loc[~df["overlap"], "community"].unique()
+n_colors = len(unique_comms)
+if n_colors <= 20:
+    base_cmap = plt.cm.get_cmap("tab20", max(n_colors, 1))
+else:
+    base_cmap = ListedColormap(plt.cm.gist_ncar(np.linspace(0, 1, n_colors)))
+
+# یک نگاشت community -> index برای رنگ‌دهی پایدار
+comm_to_idx = {c: i for i, c in enumerate(sorted(unique_comms))}
 
 # ---------- 5) رسم به سبک مرجع با جزئیات بیشتر ----------
 fig, ax = plt.subplots(figsize=(14, 9))
@@ -81,6 +100,7 @@ fig, ax = plt.subplots(figsize=(14, 9))
 bg      = "#bdbdbd"   # پس‌زمینه (اقیانوس)
 land_c  = "#7a7a7a"   # خشکی
 border  = "#111111"   # خطوط مرزی تیره
+overlap_color = "#d81920"  # NEW: قرمز برای multi-membership
 
 fig.patch.set_facecolor(bg)
 ax.set_facecolor(bg)
@@ -128,9 +148,18 @@ if lakes is not None:
     gpd.clip(lakes, extent_poly).plot(ax=ax, facecolor=bg, edgecolor=border, linewidth=0.4, zorder=1.15)
 
 # 8) نقاط شبکه (روی همه چیز)
-for i, (comm, grp) in enumerate(df.groupby("community")):
-    ax.scatter(grp["lon"], grp["lat"], s=6, color=cmap(i), alpha=0.65, linewidth=0,
-               zorder=3, label=f"Community {comm}")
+# 8-الف) غیر-overlap ها بر اساس community
+for comm, grp in df[df["overlap"] == False].groupby("community"):
+    color = base_cmap(comm_to_idx[comm]) if n_colors > 0 else "#444444"
+    ax.scatter(grp["lon"], grp["lat"], s=6, color=color, alpha=0.65,
+               linewidth=0, zorder=3, label=f"Community {comm}")
+
+# 8-ب) overlap ها (multi-membership) به رنگ قرمز
+overlaps_df = df[df["overlap"] == True]
+if not overlaps_df.empty:
+    ax.scatter(overlaps_df["lon"], overlaps_df["lat"], s=12,  # کمی بزرگ‌تر تا دیده شود
+               color=overlap_color, alpha=0.8, linewidth=0, zorder=3.5,
+               label="Overlaps (multi-membership)")  # NEW: برچسب لِجند
 
 # ظاهر نهایی مثل مرجع
 ax.set_xlim(minx, maxx); ax.set_ylim(miny, maxy)
@@ -138,22 +167,20 @@ ax.set_xticks([]); ax.set_yticks([])
 for s in ax.spines.values():
     s.set_edgecolor(border); s.set_linewidth(1.5)
 
-# (اختیاری) لِجند
-leg = ax.legend(fontsize=8, markerscale=1.6, bbox_to_anchor=(1.01, 1), loc="upper left", frameon=True)
+# لِجند: هم اجتماعات و هم Overlaps
+leg = ax.legend(fontsize=8, markerscale=1.6, bbox_to_anchor=(1.01, 1),
+                loc="upper left", frameon=True)
 leg.get_frame().set_facecolor("#d7d7d7"); leg.get_frame().set_edgecolor(border)
 
 plt.tight_layout()
 
-# ---------- کپشن + ذخیره با timestamp ----------
+# ---------- کپشن + ذخیره ----------
 json_name = Path(JSON_PATH).name
 gml_name  = Path(GML_PATH).name
 caption = f"based on {json_name} and {gml_name}"
 fig.text(0.5, -0.02, caption, ha="center", va="top", fontsize=10, color="black")
 
-safe_json = json_name.replace(" ", "_")
-safe_gml  = gml_name.replace(" ", "_")
-out_name = f"{algorithm_directory}/community_map_based-on-{safe_json}_and-{safe_gml}.png"
-
+out_name = f"{algorithm_directory}/community_map_based-on-{json_name.replace(' ', '_')}_and-{gml_name.replace(' ', '_')}.png"
 plt.savefig(out_name, dpi=300, bbox_inches="tight", facecolor=fig.get_facecolor())
 print(f"Saved: {out_name}")
 plt.show()
