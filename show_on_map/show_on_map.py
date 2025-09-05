@@ -6,12 +6,16 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from matplotlib.colors import ListedColormap
-from datetime import datetime
+from shapely.geometry import box
 
 # ---------- تنظیم مسیر فایل‌ها ----------
-JSON_PATH = "community_membership_map.json"
-GML_PATH  = "Communication_Network.gml/Communication_Network.gml"
-SHP_PATH  = "cb_2018_us_state_20m/cb_2018_us_state_20m.shp"
+JSON_PATH = "Mobility_Network.gml_2_map.json"
+
+GML_PATH  = "Mobility_Network.gml/Mobility_Network.gml"
+
+
+
+SHP_PATH  = "downloadedMap/cb_2018_us_state_20m/cb_2018_us_state_20m.shp"
 
 # ---------- 1) نگاشت اجتماع ----------
 with open(JSON_PATH, encoding="utf-8") as f:
@@ -69,7 +73,7 @@ fig, ax = plt.subplots(figsize=(14, 9))
 
 # رنگ‌ها
 bg     = "#bdbdbd"   # پس‌زمینه (اقیانوس)
-land   = "#7a7a7a"   # خشکی
+land_c   = "#7a7a7a"   # خشکی
 border = "#111111"   # خطوط مرزی تیره
 
 fig.patch.set_facecolor(bg)
@@ -95,7 +99,7 @@ if ne_land is not None:
 states.plot(ax=ax, facecolor="none", edgecolor=border, linewidth=1.2, zorder=1)
 
 # 3) کانتی‌ها و مرزها/ساحل/دریاچه‌ها (اگر حاضرند)
-counties = _read_opt("cb_2018_us_county_20m/cb_2018_us_county_20m.shp")
+counties = _read_opt("downloadedMap/cb_2018_us_county_20m/cb_2018_us_county_20m.shp")
 if counties is not None:
     counties_clip = gpd.clip(counties, extent_poly)
     counties_clip.boundary.plot(ax=ax, linewidth=0.35, edgecolor="#2e2e2e", zorder=1.05)
@@ -131,11 +135,37 @@ for s in ax.spines.values():
 leg = ax.legend(fontsize=8, markerscale=1.6, bbox_to_anchor=(1.01, 1), loc="upper left", frameon=True)
 leg.get_frame().set_facecolor("#d7d7d7"); leg.get_frame().set_edgecolor(border)
 
+
+# ... (بقیه کد رسم مثل قبل)
+
 plt.tight_layout()
 
-# ذخیره با timestamp (مثل قبل)
+# ---------- اضافه کردن متن توضیحی زیر شکل ----------
+caption = f"based on {Path(JSON_PATH).name} and {Path(GML_PATH).name}"
+# x=0.5 یعنی وسط، y=-0.02 کمی پایین‌تر از شکل
+fig.text(0.5, -0.02, caption,
+         ha="center", va="top",
+         fontsize=10, color="black")
+
+# ---------- ذخیره با timestamp ----------
 from datetime import datetime
+
+# اسم فایل‌ها فقط اسم کوتاه (بدون مسیر)
+json_name = Path(JSON_PATH).name
+gml_name  = Path(GML_PATH).name
+
+# متن زیر نقشه
+caption = f"based on {json_name} and {gml_name}"
+fig.text(0.5, -0.02, caption,
+         ha="center", va="top",
+         fontsize=10, color="black")
+
+# اسم خروجی با timestamp + اسم فایل‌ها
 ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-out_name = f"community_map_{ts}.png"
+safe_json = json_name.replace(" ", "_")
+safe_gml  = gml_name.replace(" ", "_")
+out_name = f"outputs/community_map_{ts}_based-on-{safe_json}_and-{safe_gml}.png"
+
 plt.savefig(out_name, dpi=300, bbox_inches="tight", facecolor=fig.get_facecolor())
 print(f"Saved: {out_name}")
+plt.show()
