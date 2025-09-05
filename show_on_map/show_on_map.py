@@ -9,13 +9,41 @@ from matplotlib.colors import ListedColormap
 from shapely.geometry import box
 
 # ---------- تنظیم مسیر فایل‌ها ----------
-JSON_PATH = "../algorithms/leiden/community_detection_outputs/mobility/Mobility_Network.gml_2_map.json"
+algorithm_directory = "../algorithms/leiden/community_detection_outputs/communication"
+JSON_PATH = algorithm_directory + "/Communication_Network.gml_0.5_map.json"
 
-GML_PATH  = "../dataset/Mobility_Network.gml/Mobility_Network.gml"
+# choose dataset!
+# communication
+GML_PATH  = "../dataset/Communication_Network.gml/Communication_Network.gml"
 
+# mobility
+# GML_PATH  = "../dataset/Mobility_Network.gml/Mobility_Network.gml"
 
-
+# States
 SHP_PATH  = "downloadedMap/cb_2018_us_state_20m/cb_2018_us_state_20m.shp"
+# Counties
+COUNTY_SHP   = "downloadedMap/cb_2018_us_county_20m/cb_2018_us_county_20m.shp"
+
+# Natural Earth
+NE_LAND      = "downloadedMap/ne_10m_land/ne_10m_land.shp"
+NE_OCEAN     = "downloadedMap/ne_10m_ocean/ne_10m_ocean.shp"
+NE_COAST     = "downloadedMap/ne_10m_coastline/ne_10m_coastline.shp"
+NE_LAKES     = "downloadedMap/ne_10m_lakes/ne_10m_lakes.shp"
+NE_ADMIN0    = "downloadedMap/ne_10m_admin_0_boundary_lines_land/ne_10m_admin_0_boundary_lines_land.shp"
+NE_ADMIN1    = "downloadedMap/ne_10m_admin_1_states_provinces_lines/ne_10m_admin_1_states_provinces_lines.shp"
+
+def _read_opt(path: str):
+    p = Path(path)
+    if not p.exists():
+        print(f"[MISS] {path}")
+        return None
+    try:
+        gdf = gpd.read_file(p).to_crs("EPSG:4326")
+        print(f"[OK]   {path}")
+        return gdf
+    except Exception as e:
+        print(f"[WARN] {p.name} load error: {e}")
+        return None
 
 # ---------- 1) نگاشت اجتماع ----------
 with open(JSON_PATH, encoding="utf-8") as f:
@@ -42,39 +70,17 @@ states = gpd.read_file(SHP_PATH).to_crs("EPSG:4326")
 
 # ---------- 4) پالت رنگ مناسب تعداد زیاد ----------
 n_colors = df["community"].nunique()
-if n_colors <= 20:
-    cmap = plt.cm.get_cmap("tab20", n_colors)
-else:
-    # پالت پیوسته و پرکنتراست روی پس‌زمینهٔ تیره
-    cmap = ListedColormap(plt.cm.gist_ncar(np.linspace(0, 1, n_colors)))
-
-
-
-# ---------- مسیر لایه‌های اضافی (اختیاری) ----------
-COUNTY_SHP   = "cb_2018_us_county_20m/cb_2018_us_county_20m.shp"
-NE_ADMIN0    = "ne_10m_admin_0_boundary_lines_land/ne_10m_admin_0_boundary_lines_land.shp"
-NE_ADMIN1    = "ne_10m_admin_1_states_provinces_lines/ne_10m_admin_1_states_provinces_lines.shp"
-NE_COAST     = "ne_10m_coastline/ne_10m_coastline.shp"
-NE_LAKES     = "ne_10m_lakes/ne_10m_lakes.shp"
-NE_LAND  = "ne_10m_land/ne_10m_land.shp"
-NE_OCEAN = "ne_10m_ocean/ne_10m_ocean.shp"  # اختیاری
-
-def _read_opt(path):
-    p = Path(path)
-    if p.exists():
-        try:
-            return gpd.read_file(p).to_crs("EPSG:4326")
-        except Exception as e:
-            print(f"[WARN] نتوانستم {p.name} را بخوانم:", e)
-    return None
+cmap = (plt.cm.get_cmap("tab20", n_colors)
+        if n_colors <= 20 else
+        ListedColormap(plt.cm.gist_ncar(np.linspace(0, 1, n_colors))))
 
 # ---------- 5) رسم به سبک مرجع با جزئیات بیشتر ----------
 fig, ax = plt.subplots(figsize=(14, 9))
 
 # رنگ‌ها
-bg     = "#bdbdbd"   # پس‌زمینه (اقیانوس)
-land_c   = "#7a7a7a"   # خشکی
-border = "#111111"   # خطوط مرزی تیره
+bg      = "#bdbdbd"   # پس‌زمینه (اقیانوس)
+land_c  = "#7a7a7a"   # خشکی
+border  = "#111111"   # خطوط مرزی تیره
 
 fig.patch.set_facecolor(bg)
 ax.set_facecolor(bg)
@@ -83,47 +89,48 @@ ax.set_facecolor(bg)
 minx, miny, maxx, maxy = -130, 23, -65, 50
 extent_poly = box(minx, miny, maxx, maxy)
 
-# 0) (اختیاری) اقیانوس‌ها، اگر فایل ocean داری
+# 0) (اختیاری) اقیانوس‌ها
 oceans = _read_opt(NE_OCEAN)
 if oceans is not None:
-    oceans_clip = gpd.clip(oceans, extent_poly)
-    oceans_clip.plot(ax=ax, facecolor=bg, edgecolor="none", zorder=0)
+    gpd.clip(oceans, extent_poly).plot(ax=ax, facecolor=bg, edgecolor="none", zorder=0)
 
-# 1) لایهٔ Land جهانی: این «خشکی» درست را می‌دهد
+# 1) خشکی جهانی (Land) – پایهٔ صحیح برای قاره
 ne_land = _read_opt(NE_LAND)
 if ne_land is not None:
-    land_clip = gpd.clip(ne_land, extent_poly)
-    land_clip.plot(ax=ax, facecolor=land_c, edgecolor="none", alpha=0.97, zorder=0.2)
+    gpd.clip(ne_land, extent_poly).plot(ax=ax, facecolor=land_c, edgecolor="none", alpha=0.97, zorder=0.2)
 
-# 2) ایالت‌های آمریکا روی Land
-states.plot(ax=ax, facecolor="none", edgecolor=border, linewidth=1.2, zorder=1)
+# 2) مرز ایالت‌های آمریکا (روی Land)
+states.boundary.plot(ax=ax, linewidth=1.2, edgecolor=border, zorder=1)
 
-# 3) کانتی‌ها و مرزها/ساحل/دریاچه‌ها (اگر حاضرند)
-counties = _read_opt("downloadedMap/cb_2018_us_county_20m/cb_2018_us_county_20m.shp")
+# 3) کانتی‌های آمریکا (خطوط ریز داخل کشور)
+counties = _read_opt(COUNTY_SHP)
 if counties is not None:
-    counties_clip = gpd.clip(counties, extent_poly)
-    counties_clip.boundary.plot(ax=ax, linewidth=0.35, edgecolor="#2e2e2e", zorder=1.05)
+    gpd.clip(counties, extent_poly).boundary.plot(ax=ax, linewidth=0.35, edgecolor="#2e2e2e", zorder=1.05)
 
-adm0 = _read_opt("ne_10m_admin_0_boundary_lines_land.shp")
+# 4) مرز بین‌المللی (admin_0)
+adm0 = _read_opt(NE_ADMIN0)
 if adm0 is not None:
     gpd.clip(adm0, extent_poly).plot(ax=ax, linewidth=1.0, edgecolor=border, zorder=1.1)
 
-adm1 = _read_opt("ne_10m_admin_1_states_provinces_lines.shp")
+# 5) مرز داخلی استان/ایالت‌های جهان (admin_1)
+adm1 = _read_opt(NE_ADMIN1)
 if adm1 is not None:
     gpd.clip(adm1, extent_poly).plot(ax=ax, linewidth=0.6, edgecolor=border, zorder=1.1)
 
-coast = _read_opt("ne_10m_coastline.shp")
+# 6) خط ساحلی دقیق
+coast = _read_opt(NE_COAST)
 if coast is not None:
     gpd.clip(coast, extent_poly).plot(ax=ax, linewidth=1.0, edgecolor=border, zorder=1.2)
 
-lakes = _read_opt("ne_10m_lakes.shp")
+# 7) دریاچه‌ها (روی خشکی با رنگ پس‌زمینه)
+lakes = _read_opt(NE_LAKES)
 if lakes is not None:
     gpd.clip(lakes, extent_poly).plot(ax=ax, facecolor=bg, edgecolor=border, linewidth=0.4, zorder=1.15)
 
-# 4) نقاط شبکه (روی همه چیز)
+# 8) نقاط شبکه (روی همه چیز)
 for i, (comm, grp) in enumerate(df.groupby("community")):
-    ax.scatter(grp["lon"], grp["lat"], s=6, color=cmap(i), alpha=0.65, linewidth=0, zorder=3,
-               label=f"Community {comm}")
+    ax.scatter(grp["lon"], grp["lat"], s=6, color=cmap(i), alpha=0.65, linewidth=0,
+               zorder=3, label=f"Community {comm}")
 
 # ظاهر نهایی مثل مرجع
 ax.set_xlim(minx, maxx); ax.set_ylim(miny, maxy)
@@ -135,36 +142,17 @@ for s in ax.spines.values():
 leg = ax.legend(fontsize=8, markerscale=1.6, bbox_to_anchor=(1.01, 1), loc="upper left", frameon=True)
 leg.get_frame().set_facecolor("#d7d7d7"); leg.get_frame().set_edgecolor(border)
 
-
-# ... (بقیه کد رسم مثل قبل)
-
 plt.tight_layout()
 
-# ---------- اضافه کردن متن توضیحی زیر شکل ----------
-caption = f"based on {Path(JSON_PATH).name} and {Path(GML_PATH).name}"
-# x=0.5 یعنی وسط، y=-0.02 کمی پایین‌تر از شکل
-fig.text(0.5, -0.02, caption,
-         ha="center", va="top",
-         fontsize=10, color="black")
-
-# ---------- ذخیره با timestamp ----------
-from datetime import datetime
-
-# اسم فایل‌ها فقط اسم کوتاه (بدون مسیر)
+# ---------- کپشن + ذخیره با timestamp ----------
 json_name = Path(JSON_PATH).name
 gml_name  = Path(GML_PATH).name
-
-# متن زیر نقشه
 caption = f"based on {json_name} and {gml_name}"
-fig.text(0.5, -0.02, caption,
-         ha="center", va="top",
-         fontsize=10, color="black")
+fig.text(0.5, -0.02, caption, ha="center", va="top", fontsize=10, color="black")
 
-# اسم خروجی با timestamp + اسم فایل‌ها
-ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 safe_json = json_name.replace(" ", "_")
 safe_gml  = gml_name.replace(" ", "_")
-out_name = f"outputs/community_map_{ts}_based-on-{safe_json}_and-{safe_gml}.png"
+out_name = f"{algorithm_directory}/community_map_based-on-{safe_json}_and-{safe_gml}.png"
 
 plt.savefig(out_name, dpi=300, bbox_inches="tight", facecolor=fig.get_facecolor())
 print(f"Saved: {out_name}")
