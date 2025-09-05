@@ -14,7 +14,7 @@ import json
 
 # Settings
 OUTPUT_TITLE = "Mobility_Network"
-GML_PATH = "Mobility_Network.gml/Mobility_Network.gml"
+GML_PATH = "../../dataset/Mobility_Network.gml/Mobility_Network.gml"
 RESOLUTION = 1.5  # γ (Larger ---> Smaller Communities)
 N_TRIALS = 3  # Number of executions
 SEED = 37  # Randomness seed
