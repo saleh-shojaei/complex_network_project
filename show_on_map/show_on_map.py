@@ -9,8 +9,8 @@ from matplotlib.colors import ListedColormap
 from shapely.geometry import box
 
 # ---------- تنظیم مسیر فایل‌ها ----------
-algorithm_directory = "../algorithms/leiden/community_detection_outputs/communication"
-JSON_PATH = algorithm_directory + "/Communication_Network.gml_0.5_map.json"
+algorithm_directory = "../algorithms/bigCLAM/community_detection_outputs/communication"
+JSON_PATH = algorithm_directory + "/comm_bigclam_like_single_40.json"
 
 # choose dataset!
 # communication
