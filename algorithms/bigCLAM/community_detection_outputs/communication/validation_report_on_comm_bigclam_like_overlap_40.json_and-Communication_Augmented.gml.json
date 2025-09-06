@@ -1,0 +1,11 @@
+{
+  "json_file": "comm_bigclam_like_overlap_40.json",
+  "augmented_gml_file": "Communication_Augmented.gml",
+  "num_nodes": 28093,
+  "num_edges": 1072943,
+  "num_communities_with_data": 40,
+  "overlap_nodes": 10333,
+  "average_dominant_state_share_percent": 54.79,
+  "average_outside_dominant_share_percent": 45.21,
+  "csv_path": "D:\\archive\\university\\Master\\master 2\\network\\project\\algorithms\\bigCLAM\\community_detection_outputs\\communication\\validation_report_on_comm_bigclam_like_overlap_40.json_and-Communication_Augmented.gml.csv"
+}

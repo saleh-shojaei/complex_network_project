@@ -12,13 +12,12 @@ from shapely.geometry import box
 # ---------- تنظیم مسیر فایل‌ها ----------
 algorithm_directory = "../algorithms/bigCLAM/community_detection_outputs/communication"
 JSON_PATH = algorithm_directory + "/comm_bigclam_like_overlap_30.json"
-
-# choose dataset!
-# communication
-GML_PATH  = "../dataset/Communication_Network.gml/Communication_Network.gml"
-
-# mobility
+# GML_PATH  = "../dataset/Communication_Network.gml/Communication_Network.gml"
 # GML_PATH  = "../dataset/Mobility_Network.gml/Mobility_Network.gml"
+
+# choose your dataset!
+# communication
+# mobility
 
 # States
 SHP_PATH  = "downloadedMap/cb_2018_us_state_20m/cb_2018_us_state_20m.shp"

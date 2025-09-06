@@ -1,0 +1,11 @@
+{
+  "json_file": "Mobility_Network.gml_0.75_map.json",
+  "augmented_gml_file": "Mobility_Augmented.gml",
+  "num_nodes": 38850,
+  "num_edges": 650687,
+  "num_communities_with_data": 19,
+  "overlap_nodes": 0,
+  "average_dominant_state_share_percent": 50.98,
+  "average_outside_dominant_share_percent": 49.02,
+  "csv_path": "D:\\archive\\university\\Master\\master 2\\network\\project\\algorithms\\leiden\\community_detection_outputs\\mobility\\validation_report_on_Mobility_Network.gml_0.75_map.json_and-Mobility_Augmented.gml.csv"
+}
