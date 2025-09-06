@@ -1,0 +1,11 @@
+{
+  "json_file": "mobility_bigclam_like_overlap_20.json",
+  "augmented_gml_file": "Mobility_Augmented.gml",
+  "num_nodes": 38850,
+  "num_edges": 650687,
+  "num_communities_with_data": 20,
+  "overlap_nodes": 11272,
+  "average_dominant_state_share_percent": 47.12,
+  "average_outside_dominant_share_percent": 52.88,
+  "csv_path": "D:\\archive\\university\\Master\\master 2\\network\\project\\algorithms\\bigCLAM\\community_detection_outputs\\mobility\\validation_report_on_mobility_bigclam_like_overlap_20.json_and-Mobility_Augmented.gml.csv"
+}
