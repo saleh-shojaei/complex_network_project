@@ -1,0 +1,11 @@
+{
+  "json_file": "Communication_Network_louvain_2_map.json",
+  "augmented_gml_file": "Communication_Augmented.gml",
+  "num_nodes": 28093,
+  "num_edges": 1072943,
+  "num_communities_with_data": 28,
+  "overlap_nodes": 0,
+  "average_dominant_state_share_percent": 62.41,
+  "average_outside_dominant_share_percent": 37.59,
+  "csv_path": "D:\\archive\\university\\Master\\master 2\\network\\project\\algorithms\\louvain\\community_detection_outputs\\communication\\validation_report_on_Communication_Network_louvain_2_map.json_and-Communication_Augmented.gml.csv"
+}

@@ -15,10 +15,10 @@ No maps. No Markdown tables. Super simple.
 """
 
 # ========= Config =========
-algorithm_path = "../algorithms/bigCLAM/community_detection_outputs/mobility"
-JSON_PATH = algorithm_path + "/mobility_bigclam_like_overlap_40.json"
-# AUGMENTED_GML_PATH = r"..\data_enrichment\Communication_Augmented.gml"
-AUGMENTED_GML_PATH = r"..\data_enrichment\Mobility_Augmented.gml"
+algorithm_path = "../algorithms/leiden/community_detection_outputs/communication"
+JSON_PATH = algorithm_path + "/Communication_Network.gml_2_map.json"
+AUGMENTED_GML_PATH = r"..\data_enrichment\Communication_Augmented.gml"
+# AUGMENTED_GML_PATH = r"..\data_enrichment\Mobility_Augmented.gml"
 
 REPORT_OUTDIR = algorithm_path
 CSV_OUTDIR = algorithm_path
